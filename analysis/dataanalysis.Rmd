@@ -1,0 +1,338 @@
+---
+title: 'Next word prediction: preliminary data analysis'
+output:
+  html_document:
+    keep_md: yes
+  pdf_document:
+    keep_tex: yes
+---
+
+## Summary
+
+This document analyses the raw data provided as input for the Next Word Prediction
+assignment.<br/>
+This input data comes from three different sources:
+
+* An english language corpus extracted from internet news sources
+* An english language corpus extracted from internet blogs
+* An english language corpus extracted from Twitter
+
+In order to make an analysis of the data and create convenient data structures upon 
+which the rest of the assignment will be performed, several transformations are 
+carried out on the raw data, as explained in the different sections of this document.</br>
+
+The transformed data is then used to obtain descriptive statistics, and finally 
+a brief explanation is given regarding the planned next steps towards the 
+completion of the assignment.</br>
+
+
+## Raw data analysis
+
+The raw data is obtained from the following URL:
+
+https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip
+
+It contains text corpora in several languajes:
+
+* German (de_DE)
+* English (en_US)
+* Finish (fi_FI)
+* Russian (ru_RU)
+
+For each of the languages three differente text corpora are provided:
+
+* <lang>.news.txt: corpus extracted from internet news sources
+* <lang>.blogs.txt: corpus extracted from internet blogs
+* <lang>.twitter.txt: corpus extracted from Twitter
+
+The chosen language for the assignment is English.</br>
+The following figure summarises the number of lines, words and character on each 
+of the provided English corpora files:
+
+
+```{r rawstats, echo=FALSE, cache=TRUE}
+
+library(stringr)
+setwd("/Users/gmcorral/Coursera/datascientist/capstone//final/en_US/")
+ 
+raw.files <- data.frame(Lines=integer(), Words=integer(), Characters=integer(),
+                        Filename=character(), stringsAsFactors=FALSE)
+
+raw.files[1,] <- unlist(strsplit(str_trim(system2("wc", c("en_US.news.txt"), stdout=TRUE)), split=" "))
+raw.files[2,] <- unlist(strsplit(str_trim(system2("wc", c("en_US.blogs.txt"), stdout=TRUE)), split=" "))
+raw.files[3,] <- unlist(strsplit(str_trim(system2("wc", c("en_US.twitter.txt"), stdout=TRUE)), split=" "))
+
+raw.files
+
+```
+
+## Data cleaning
+
+Raw text files contain many symbols, words and tokens which must be removed before 
+being able to obtain a working model of the data.</br>
+The transformations performed on the raw data are the following:
+
+* Split the text into smaller sentences, taking into account line breaks, 
+punctuation symbol and other characters.
+* Transform all text to lower case.
+* Remove hashtags and URLs.
+* Expand English language contractions.
+* Substitute numbers and offenders by markdown tags.
+* Remove any other non-alphabetical characters.
+* Trim sentences and remove multiple spaces.
+
+After these ransformations, it can be observed that number of words and characters 
+remain almost unchanged, but number of lines has risen up to a factor of 5, mainly 
+on news and blogs. This is due to the fact that most of the lines in the raw files 
+contained more than one sentence.
+
+```{r cleanstats, echo=FALSE, cache=TRUE}
+
+setwd("/Users/gmcorral/Coursera/datascientist/capstone//final/en_US/")
+
+clean.files <- data.frame(Lines=integer(), Words=integer(), Characters=integer(),
+                        Filename=character(), stringsAsFactors=FALSE)
+
+clean.files[1,] <- unlist(strsplit(str_trim(system2("wc", c("en_US.news.clean.txt"), stdout=TRUE)), split=" "))
+clean.files[2,] <- unlist(strsplit(str_trim(system2("wc", c("en_US.blogs.clean.txt"), stdout=TRUE)), split=" "))
+clean.files[3,] <- unlist(strsplit(str_trim(system2("wc", c("en_US.twitter.clean.txt"), stdout=TRUE)), split=" "))
+
+clean.files
+
+```
+
+## Data sampling
+
+As size of data makes every process performed on it slow to execute, the data used 
+for this analysis has been sampled from the whole of the data.</br>
+A random sample of 100.000 sentences will be used for the following analysis.</br>
+Next figure shows the head of the sampled data:
+
+```{r cleanload, echo=FALSE, message=FALSE, error=FALSE, results='hide', cache=TRUE}
+
+library(data.table)
+
+setwd("/Users/gmcorral/Coursera/datascientist/capstone//final/en_US/")
+
+twitter.clean <- fread("en_US.twitter.clean.txt", sep="\n", header=FALSE)
+blogs.clean <- fread("en_US.blogs.clean.txt", sep="\n", header=FALSE)
+news.clean <- fread("en_US.news.clean.txt", sep="\n", header=FALSE)
+all <- unlist(c(twitter.clean, blogs.clean, news.clean), use.names=FALSE)
+
+```
+
+```{r sample, echo=FALSE, message=FALSE, cache=TRUE}
+
+all.sample <- sample(all, 100000, replace = FALSE)
+head(all.sample)
+
+```
+
+## N-gram creation
+
+The next step in order to create a model with the clean data is to generate 
+n-grams, which will help in the task to identify the next word given a sentence.</br>
+Each n-gram is composed by n-1 predictor words, plus the predicted following word.
+This distribution of the data will be the base of the prediction algorithm.</br>
+Starting with the sampled data, the unigram, bigram trigram and 4-gram tables are 
+generated.
+
+```{r ngrams, echo=FALSE, message=FALSE, cache=TRUE}
+
+library(stylo)
+
+make.ngram <- function (data, n, sorted)
+{
+    data <- sapply(data, USE.NAMES=FALSE, strsplit, split=" ")
+    if(n > 1)
+    	data <- data[sapply(data, function(x) length(x) >= n)]
+	data.gram <- unlist(sapply(data, make.ngrams, n))
+	data.gram.table <- table(data.gram)
+	if(sorted)
+		data.gram.table <- sort(data.gram.table, decreasing = TRUE)
+	data.gram.table
+}
+
+all.1gram <- make.ngram(all.sample, 1, TRUE)
+all.2gram <- make.ngram(all.sample, 2, TRUE)
+all.3gram <- make.ngram(all.sample, 3, TRUE)
+all.4gram <- make.ngram(all.sample, 4, TRUE)
+
+```
+
+### Unigram table
+
+The unigram table contains each of the words extracted from the corpora, ordered 
+by their frequency.</br>
+The plot below displays the 20 most frequent words in the corpora sample, along with 
+the number of ocurrences.</br>
+
+```{r gram1plot, echo=FALSE, cache=TRUE}
+
+library(ggplot2)
+
+df.1gram <- as.data.frame(all.1gram[1:20])
+df.1gram$Word <- rownames(df.1gram)
+colnames(df.1gram) <- c("Frequency", "Word")
+
+ggplot (df.1gram, aes(x=Word, y=Frequency)) + geom_bar(stat = "identity") + 
+    ggtitle("Unigram top words\n") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+The following figure shows the histogram of word frequencies, using a logarithmic 
+scale for the Y axis.</br>
+
+```{r gram1hist, echo=FALSE, cache=TRUE}
+
+plot(all.1gram, log="y", type='h', lwd=1, lend=1, main = "Word histogram", 
+     xlab = "Word count", ylab = "Log. frequency")
+
+```
+
+As shown by the histogram, most of the words appear a small number of times, while 
+a few words appear a high number of times. This indicates that a high percentage 
+of the tokens can be covered using a reduced version of the unigram table, in order 
+to save memory consumption and improve search performance.</br>
+The table below shows the relationship between the number of words which appear 
+1, 2 and 3 or more times in the sample data, and the percentage of the total 
+word count that these words represent:</br>
+
+```{r gram1red, echo=FALSE, cache=TRUE}
+
+stats.1gram <- data.frame(Frequency=character(), Word_percent=integer(), Freq_percent=integer(),
+                          stringsAsFactors=FALSE)
+
+stats.1gram[1,] <- c("1", length(all.1gram[all.1gram == 1]) / length(all.1gram),
+                          sum(all.1gram[all.1gram == 1]) / sum(all.1gram))
+stats.1gram[2,] <- c("2", length(all.1gram[all.1gram == 2]) / length(all.1gram),
+                          sum(all.1gram[all.1gram == 2]) / sum(all.1gram))
+stats.1gram[3,] <- c(">2", length(all.1gram[all.1gram > 2]) / length(all.1gram),
+                          sum(all.1gram[all.1gram > 2]) / sum(all.1gram))
+
+stats.1gram
+
+```
+
+As it can be observed, words that appear just once conform the 51% of the number of 
+different words but only represent a 3% of the total number of words present in 
+the sample data, and 13% of words appear twice and represent less than a 2% of the tokens.
+This means that using just a 35% of the unigram table, the 95% of the corpora 
+tokens will be represented.
+
+### Bigram table
+
+The bigram table contains pairs of words extracted from the corpora, ordered 
+by their frequency.</br>
+The plot below displays the 20 most frequent word pairs in the corpora sample, along with 
+the number of ocurrences.</br>
+
+```{r gram2plot, echo=FALSE, cache=TRUE}
+
+df.2gram <- as.data.frame(all.2gram[1:20])
+df.2gram$Bigram <- rownames(df.2gram)
+colnames(df.2gram) <- c("Frequency", "Bigram")
+
+ggplot (df.2gram, aes(x=Bigram, y=Frequency)) + geom_bar(stat = "identity") + 
+    ggtitle("Bigram top sequences\n") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+The following figure shows the histogram of bigram frequencies, using a logarithmic 
+scale for the Y axis.</br>
+
+```{r gram2hist, echo=FALSE, cache=TRUE}
+
+plot(all.2gram, log="y", type='h', lwd=1, lend=1, main = "Bigram histogram", 
+     xlab = "Bigram count", ylab = "Log. frequency")
+
+```
+
+The relationship between word count and frequency for words that appear once, twice 
+and three or more times can be seen below. For bigrams, the effect is a bit less 
+significative, but a 63% of the corpora bigrams can be represented with just a 20% 
+of the bigram table.
+
+```{r gram2red, echo=FALSE, cache=TRUE}
+
+stats.2gram <- data.frame(Frequency=character(), Bigram_percent=integer(), 
+                          Freq_percent=integer(), stringsAsFactors=FALSE)
+
+stats.2gram[1,] <- c("1", length(all.2gram[all.2gram == 1]) / length(all.2gram),
+                          sum(all.2gram[all.2gram == 1]) / sum(all.2gram))
+stats.2gram[2,] <- c(">1", length(all.2gram[all.2gram > 1]) / length(all.2gram),
+                          sum(all.2gram[all.2gram > 1]) / sum(all.2gram))
+
+stats.2gram
+
+```
+
+### Trigram table
+
+The trigram table contains sequences of three words extracted from the corpora, ordered 
+by their frequency.</br>
+The plot below displays the 20 most frequent trigrams in the corpora sample, along with 
+the number of ocurrences.</br>
+
+```{r gram3plot, echo=FALSE, cache=TRUE}
+
+df.3gram <- as.data.frame(all.3gram[1:20])
+df.3gram$Trigram <- rownames(df.3gram)
+colnames(df.3gram) <- c("Frequency", "Trigram")
+
+ggplot (df.3gram, aes(x=Trigram, y=Frequency)) + geom_bar(stat = "identity") + 
+    ggtitle("Trigram top sequences\n") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+The following figure shows the histogram of trigram frequencies, using a logarithmic 
+scale for the Y axis.</br>
+
+```{r gram3hist, echo=FALSE, cache=TRUE}
+
+plot(all.3gram, log="y", type='h', lwd=1, lend=1, main = "Trigram histogram", 
+     xlab = "Trigram count", ylab = "Log. frequency")
+
+```
+
+### 4-gram table
+
+The 4-gram table contains sequences of four words extracted from the corpora, ordered 
+by their frequency.</br>
+The plot below displays the 20 most frequent 4-grams in the corpora sample, along with 
+the number of ocurrences.</br>
+
+```{r gram4plot, echo=FALSE, cache=TRUE}
+
+df.4gram <- as.data.frame(all.4gram[1:20])
+df.4gram$Fourgram <- rownames(df.4gram)
+colnames(df.4gram) <- c("Frequency", "Fourgram")
+
+ggplot (df.4gram, aes(x=Fourgram, y=Frequency)) + geom_bar(stat = "identity") + 
+    ggtitle("4-gram top sequences\n") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+The following figure shows the histogram of 4-gram frequencies, using a logarithmic 
+scale for the Y axis.</br>
+
+```{r gram4hist, echo=FALSE, cache=TRUE}
+
+plot(all.4gram, log="y", type='h', lwd=1, lend=1, main = "4-gram histogram", 
+     xlab = "4-gram count", ylab = "Log. frequency")
+
+```
+
+## Next steps
+
+The next steps in order to finish the assignment will be the following:
+
+* Eliminate the lest frequent n-grams in order to reduce the dictionary size.
+* Separate each n-gram into the predictor words and the predicted word.
+* Calculate the weight of each entry for every n-gram table, using the frequency 
+of the full n-gram and the freqneucy of the predictor words of the n-gram.
+* Mark non-dictionary words with tags in order to improve prediction results.
+* Define a backoff strategy and create the predictor function.
+* Develop a Shiny app that makes use of the predictor function.
+</br>
+</br>

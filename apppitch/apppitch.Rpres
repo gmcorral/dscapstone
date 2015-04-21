@@ -1,0 +1,97 @@
+<style>
+
+.footer
+{
+    color: white;
+    background: #FFB300;
+    position: fixed;
+    top: 95%;
+    text-align:right;
+    width:100%;
+    padding-right: 10px 10px 10px 10px;
+    margin: 10px 10px 10px 10px;
+}
+
+.section .reveal .state-background {
+  background-color: orange;
+}
+
+</style>
+
+Distribution Simulator App
+========================================================
+author: Guillermo Menéndez
+date: 08/02/2015
+font-family: 'Helvetica'
+transition: linear
+
+The application
+========================================================
+
+The distribution simulator allows to create, configure and display dynamic distributions.
+
+Handy to simulate distributions without R studio or messing with code.
+
+Graphical results.
+
+Highly configurable:
+- Distribution type and parameters
+- Number of observations
+- Plot kind
+
+<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
+
+Input controls
+========================================================
+
+Distribution type and parameters:
+
+- __Normal distribution__: configurable mean and std deviation.
+- __Uniform distribution__: configurable lower and upper limits.
+- __Log-normal distribution__: configurable mean and std dev logs.
+- __Exponential distribution__: configurable rate.
+
+Plot type:
+
+- __Histogram__: values on __x__ and frequency on __y__.
+- __Scatter plot__: index on __x__ and values on __y__.
+
+Number of observations.
+
+<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
+
+Output tabs
+========================================================
+
+Right frame displays data:
+
+- __Plot__: distribution represented through the chosen plot.
+- __Summary__: mean, median and quantiles of the distribution values.
+- __Table__: interactive table with generated distribution values.
+- __Help__: application documentation.
+
+Tabs contents are dynamically refreshed with configuration changes.
+
+<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
+
+Example
+========================================================
+
+Example simulation:
+
+    Normal distribution:
+        - Mean: 10
+        - Std dev: 5
+    Plot type: Histogram
+    Observations nr.: 600
+
+<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
+
+***
+
+```{r, echo=FALSE}
+dist <- rnorm(600, 10, 5);
+hist(dist, col='lightblue', main='Histogram', xlab = "Value", ylab = "Frequency");
+```
+
+
