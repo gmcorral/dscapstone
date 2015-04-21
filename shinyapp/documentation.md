@@ -1,56 +1,20 @@
-# Distribution simulator
+# Next word predictor
 
-This Shiny application allows you to create, configure and display dynamic distributions.
-You can choose the kind of distribution you want to simulate, its main parameters, 
-the number of observations to simulate and the type of plot to be displayed.
+This Shiny application predicts the next words of the next you are typing.
 
-The left frame allows to configure the distribution, while the right frame shows the 
-results.
+Based on the analysis of a large corpora of texts extracted from internet blogs, 
+news pages and twitter, it calculates the most probable set of words that might 
+follow the sentence you have typed so far.
 
-## Simulation kind
+The application also allows you to adjust how many words do you want to be suggested 
+(from 1 to 10). The suggestions will be made in descending order of probability.
 
-In order to select the type of distribution to be simulated, chose the appropiate 
-option in the __Plot type__ section.
-
-After that, configure the required distribution parameters, which depend on the 
-simulation type.
-
-The available distributions and parameters are the following:
-
-1. Normal: normal distribution, its mean and standard deviation can be modified.
-2. Uniform: uniform distribution, its lower and upper limits can be modified.
-3. Log-normal: log normal distribution, its mean and standard deviation logs 
-can be modified.
-4. Exponential: exponential distribution, its rate can be modified.
-
-## Plot type
-
-The type of plot to be displayed can be chosen in the __Plot type section__.
-Two different plots can be represented:
-
-* Histogram: distribution histogram. x are distribution values and y is the 
-frequency of the x value.
-* Scatter plot: distribution scatter plot with smooth line. x is the index along 
-the distribution values and y are the values corresponding to each index.
-
-## Number of observations
-
-The size of distribution data can be chosen in the __Number of observations__ section.
-
-## Data display
-
-The generated distribution data is displayed in the right frame, and organized in 
-three different tabs:
-
-* Plot: shows the chosen plot for the distribution data.
-* Summary: shows a small summary of the distribution data: mean, median and quantiles.
-* Table: shows the generated distribution values in an interactive data table.
-
-Data display tabs are refreshed each time a parameter is changed in the configuration.
+Clicking on any of the suggested words, it is added to the typed text, and the  
+suggestions are updated according to the new sentence.
 
 ## Source code
 
 Application source code can be found at:
 
-https://github.com/gmcorral/shinyapp
+https://github.com/gmcorral/dscapstone
 

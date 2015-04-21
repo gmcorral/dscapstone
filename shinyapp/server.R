@@ -1,7 +1,6 @@
 library(stringr)
 
-#attach("capstone.RData")
-load("capstone.RData")
+load("data/capstone.RData")
 
 # predict
 predict.words <- function(phrase, nwords)
@@ -59,20 +58,22 @@ shinyServer(
 
     function(input, output, session)
     {
-        #suggested.words <- reactiveValues(suggestions = c("the", "a"))
-
         pred <- reactive({
             phrase <- input$phrase
             words <- list()
             if(!is.null(phrase) & length(phrase) > 0)
             {
                 words <- predict.words(phrase, input$nwords)
-                #suggested.words <- reactiveValues(suggestions = words[!is.na(words)])
                 words <- words[!is.na(words)]
             }
-print(words)
             words
         });
+
+        output$suggestions <- renderUI({
+            selectInput("suggestions", label="My predictions (click to append):", choices = NULL,
+                        selectize = FALSE,
+                        selected = FALSE, multiple = TRUE)
+        })
 
         observe ({
             sugg <- input$suggestions
@@ -82,54 +83,12 @@ print(words)
                 updateTextInput(session, "phrase", value = val)
             }
         })
-        #output$prediction <- renderPrint({
-        #    pred()
-        #});
-
-        #output$predlist <- renderPrint({
-        #    pred()
-            #isolate({
-            #    updateSelectizeInput(session, "suggestions", choices = pred(), selected = NULL)
-            #})
-        #})
-
-        #output$predlist <- renderUI({
-        #    selectizeInput('suggestions', 'Suggestions', pred())
-        #})
-
-        #reactive({ updateSelectizeInput(session, 'foo', choices = pred(), server = TRUE) })
-        #updateSelectizeInput(session, 'foo', choices = predict(input$foo, input$nwords), server = TRUE)
-
-        output$suggestions <- renderUI({
-                #words <- pred()
-                selectInput("suggestions", label="Suggestions:", choices = NULL,
-                          #options = list(placeholder = 'Type a phrase', create = FALSE,
-                          #               openOnFocus = TRUE, hideSelected = FALSE,
-                          #               closeAfterSelect = FALSE,
-                          #               dropdownParent = 'body', create = TRUE),
-                          selectize = FALSE,
-                          selected = FALSE, multiple = TRUE)
-
-        })
 
         observe({
-            #input$suggestions
-        #    alist <- list(text = input$suggestions, suggestions = pred())
             words <- pred()
-        #    print(alist)
-        #    if (is.null(input$suggestions) | length(input$suggestions) == 0)
-        #        return()
-
-        #    print(input$suggestions)
-
-        #    session$words <- predict(input$suggestions, input$nwords)
-        #    session$words <- session$words[!is.na(session$words)]
-        #    print(session$words)
-
             isolate({
-                print("4")
                 updateSelectInput(session, "suggestions", choices = words, selected = NULL)
-            })#iso
-        })#obs
+            })
+        })
     }
 )
