@@ -17,7 +17,7 @@ expand.contr <- function(sentence)
     sentence <- gsub("'m|´m", " am", sentence)
     sentence <- gsub("'ve|´ve", " have", sentence)
     sentence <- gsub("won't|won´t", "will not", sentence)
-    sentence <- gsub("n't|n´t", " not", sentence)
+    sentence <- gsub("n't|n´t", "n not", sentence)
     sentence <- gsub("let's|let´s", "let us", sentence)
     sentence <- gsub("'s|´s", " is", sentence)
     sentence <- gsub("'re|´re", " are", sentence)
@@ -26,7 +26,7 @@ expand.contr <- function(sentence)
     sentence
 }
 
-clean.sentence <- function(sentence, dict)
+clean.sentence <- function(sentence)#, dict)
 {
     # transform to lower case
     sentence <- tolower(sentence)
@@ -51,40 +51,13 @@ clean.sentence <- function(sentence, dict)
     # trim leading and trailing blanks
     sentence <- str_trim(sentence)
 
-    sentence
+    sentence[!sentence ==""]
 }
 
-clean.file <- function(table, outputFile, dict)
+clean.file <- function(file, dict)
 {
-    #conR  <- file(inputFile, open = "r")
-    conW  <- file(outputFile, open = "w")
-
-    #maxLines <- 100000
-    #count <- 0
-    #while ((length(oneLine <- readLines(conR, n = 1, warn = FALSE)) > 0) && (count < maxLines))
-    for(i in 1:nrow(twitter))
-    {
-        oneLine <- as.character(table[i])
-        sentences <- sapply(unlist(strsplit(oneLine,
-                                    "[\\.;:¡!\\[¿\\?\\(\\)«»<>“”\"\\|&/=\\+\\{}[:digit:]+\\-]")),
-                            clean.sentence, dict = dict)
-        for(sentence in sentences)
-            if(!is.na(sentence) && nchar(sentence) > 0)
-                #rbindlist(list(tableClean, as.list(sentence)))
-                writeLines(sentence, conW)
-
-        #count <- count + 1
-        #print(count)
-    }
-
-    rm(sentences)
-    rm(sentence)
-    rm(oneLine)
-    #rm(count)
-    #rm(maxLines)
-
-    #close(conR)
-    close(conW)
+	splitted <- strsplit(blogs[[1]],"[\\.,;:¡!\\[¿\\?\\(\\)«»<>“”\"\\|&/=\\+\\{}[:digit:]+\\-]")
+	unlist(sapply(splitted, clean.sentence))
 }
 
 # start script
@@ -93,15 +66,17 @@ setwd("/Users/gmcorral/Coursera/datascientist/capstone//final/en_US/")
 # load english dictionary
 dict <- fread("wordlist_lowercase.txt", header = FALSE)
 
+# clean twitter
 file <- "en_US.twitter.txt"
 tt <- tempfile()  # or tempfile(tmpdir="/dev/shm")
 system(paste0("tr < ", file, " -d '\\000' >", tt))
 twitter <- fread(tt, sep="\n", header=FALSE, showProgress = TRUE)
-clean.file(twitter, "en_US.twitter.clean.txt", dict)
+clean.file(twitter, dict)
 
+# clean blogs
 blogs <- fread("en_US.blogs.txt", sep="\n", header=FALSE, showProgress = TRUE)
-clean.file(blogs, "en_US.blogs.clean.txt", dict)
+blogs.clean <- clean.file(blogs, dict)
 
+# clean news
 news <- fread("en_US.news.txt", sep="\n", header=FALSE, showProgress = TRUE)
-clean.file(news, "en_US.news.clean.txt", dict)
-
+news.clean <- clean.file(news, dict)
