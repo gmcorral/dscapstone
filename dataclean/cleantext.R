@@ -24,10 +24,11 @@ expand.contr <- function(sentence)
     sentence <- gsub("'re|´re", " are", sentence)
     sentence <- gsub("gonna", "going to", sentence)
     sentence <- gsub("wanna", "want to", sentence)
-    sentence <- gsub(" b ", " be ", sentence)
-    sentence <- gsub(" r ", " are ", sentence)
-    sentence <- gsub(" u ", " you ", sentence)
-    sentence <- gsub(" w ", " with ", sentence)
+    sentence <- gsub("^b | b | b$", " be ", sentence)
+    sentence <- gsub("^r | r | r$", " are ", sentence)
+    sentence <- gsub("^u | u | u$", " you ", sentence)
+    sentence <- gsub("^w | w | w$", " with ", sentence)
+    sentence <- gsub("^s | s | s$", " ", sentence)
     sentence
 }
 
@@ -72,7 +73,7 @@ clean.file <- function(data, dict)
 setwd("/Users/gmcorral/Coursera/datascientist/capstone//final/en_US/")
 
 # load english dictionary
-dict <- fread("wordlist_lowercase.txt", header = FALSE)
+#dict <- fread("wordlist_lowercase.txt", header = FALSE)
 
 # clean twitter
 file <- "en_US.twitter.txt"
@@ -94,7 +95,11 @@ rm(blogs.clean)
 # clean news
 news <- fread("en_US.news.txt", sep="\n", header=FALSE, showProgress = TRUE)
 news.clean <- clean.file(news, dict)
-write.table(news.clean, file = "en_US.news.clean.txt", row.names = FALSE, col.names = FALSE)
+write.table(news.clean, file = "en_US.new
+
+
+
+s.clean.txt", row.names = FALSE, col.names = FALSE)
 rm(news)
 rm(news.clean)
 

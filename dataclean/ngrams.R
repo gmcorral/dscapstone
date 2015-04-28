@@ -28,13 +28,39 @@ library(stringr)
 
 make.ngram <- function (data, n, sorted)
 {
-    data <- sapply(data, USE.NAMES=FALSE, strsplit, split=" ")
+	print("Splitting..")
+	start <- Sys.time()
+	print(start)
+	
+    #data <- sapply(data, USE.NAMES=FALSE, strsplit, split=" ")
 	if(n > 1)
+	{
+		print("Trimming..")
+		print(Sys.time())
 		data <- data[sapply(data, function(x) length(x) >= n)]
+	}
+	
+	print("Making n-gram..")
+	print(Sys.time())
+	
 	data.gram <- unlist(sapply(data, make.ngrams, n))
+	
+	print("Converting to table..")
+	print(Sys.time())
+	
 	data.gram.table <- table(data.gram)
+		
 	if(sorted)
+	{
+		print("Sorting..")
+		print(Sys.time())
 		data.gram.table <- sort(data.gram.table, decreasing = TRUE)
+	}
+	
+	print("Done")
+	print(Sys.time())
+	print(Sys.time() - start)
+	
 	data.gram.table
 }
 
@@ -48,45 +74,103 @@ news.clean <- fread("en_US.news.clean.txt", sep="\n", header=FALSE, showProgress
 
 # join files and create sample
 all <- unlist(c(twitter.clean, blogs.clean, news.clean), use.names=FALSE)
-all.sample <- sample(all, 10000, replace = FALSE)
-
-# calculate n-grams
-all.1gram <- make.ngram(all.sample, 1, TRUE)
-all.2gram <- make.ngram(all.sample, 2, TRUE)
-all.3gram <- make.ngram(all.sample, 3, TRUE)
-all.4gram <- make.ngram(all.sample, 4, TRUE)
+rm(list=c("blogs.clean", "news.clean", "twitter.clean"))
+all.sample <- sample(all, 3243174, replace = FALSE)
+rm(all)
+all.sample <- sapply(all.sample, USE.NAMES=FALSE, strsplit, split=" ")
+save(all.sample, file='sample.RData')
+gc()
 
 # backup n-grams
-write.table(all.1gram, file = "en_US.all.1gram.txt", row.names = TRUE, col.names = FALSE)
-write.table(all.2gram, file = "en_US.all.2gram.txt", row.names = TRUE, col.names = FALSE)
-write.table(all.3gram, file = "en_US.all.3gram.txt", row.names = TRUE, col.names = FALSE)
-write.table(all.4gram, file = "en_US.all.4gram.txt", row.names = TRUE, col.names = FALSE)
+#write.table(all.1gram, file = "en_US.all.1gram.txt", row.names = TRUE, col.names = FALSE)
+#write.table(all.2gram, file = "en_US.all.2gram.txt", row.names = TRUE, col.names = FALSE)
+#write.table(all.3gram, file = "en_US.all.3gram.txt", row.names = TRUE, col.names = FALSE)
+#write.table(all.4gram, file = "en_US.all.4gram.txt", row.names = TRUE, col.names = FALSE)
 
 # create data frames from n-grams
+print("Calculating 1-gram..")
+all.1gram <- make.ngram(all.sample, 1, TRUE)
+rm(all.sample)
+gc()
+
+print("Data frame for 1-gram..")
+print(Sys.time())
+all.1gram <- all.1gram[all.1gram > 100]
 all.1gram.df <- data.frame(w1=names(all.1gram), p=all.1gram,
 							row.names=seq_along(all.1gram))
+save(all.1gram.df, file='1gram.RData')
+rm(list=c('all.1gram', 'all.1gram.df'))
+gc()
+print(Sys.time())
 
+
+print("Calculating 2-gram..")
+load('sample.RData')
+all.2gram <- make.ngram(all.sample, 2, TRUE)
+rm(all.sample)
+gc()
+
+print("Data frame for 2-gram..")
+print(Sys.time())
+all.2gram <- all.2gram[all.2gram > 2]
+gc()
 splitted.2gram <- str_split_fixed(names(all.2gram), " ", 2)
+print(Sys.time())
 all.2gram.df <- data.frame(w1=splitted.2gram[,1], w2=splitted.2gram[,2], p=all.2gram,
 							row.names=seq_along(all.2gram))
+save(all.2gram.df, file='2gram.RData')
+rm(list=c('all.2gram', 'all.2gram.df', 'splitted.2gram'))
+gc()
+print(Sys.time())
 
+
+print("Calculating 3-gram..")
+load('sample.RData')
+all.3gram <- make.ngram(all.sample, 3, TRUE)
+rm(all.sample)
+gc()
+print("Data frame for 3-gram..")
+print(Sys.time())
+all.3gram <- all.3gram[all.3gram > 2]
+gc()
 splitted.3gram <- str_split_fixed(names(all.3gram), " ", 3)
+print(Sys.time())
 all.3gram.df <- data.frame(w1=splitted.3gram[,1], w2=splitted.3gram[,2], w3=splitted.3gram[,3],
 							p=all.3gram, row.names=seq_along(all.3gram))
+save(all.3gram.df, file='3gram.RData')
+rm(list=c('all.3gram', 'all.3gram.df', 'splitted.3gram'))
+gc()
+print(Sys.time())
 
+
+print("Calculating 4-gram..")
+load('sample.RData')
+all.4gram <- make.ngram(all.sample, 4, TRUE)
+rm(all.sample)
+gc()
+
+print("Data frame for 4-gram..")
+print(Sys.time())
+all.4gram <- all.4gram[all.4gram > 2]
+gc()
 splitted.4gram <- str_split_fixed(names(all.4gram), " ", 4)
+print(Sys.time())
 all.4gram.df <- data.frame(w1=splitted.4gram[,1], w2=splitted.4gram[,2], w3=splitted.4gram[,3],
 							w4=splitted.4gram[,4], p=all.4gram, row.names=seq_along(all.4gram))
+save(all.4gram.df, file='4gram.RData')
+rm(list=c('all.4gram', 'all.4gram.df', 'splitted.4gram'))
+gc()
+print(Sys.time())
 
 # calculate relative weights
-total.1gram <- sum(all.1gram.df[,2])
-all.1gram.df[,2] <- all.1gram.df[,2]/total.1gram
+#total.1gram <- sum(all.1gram.df[,2])
+#all.1gram.df[,2] <- all.1gram.df[,2]/total.1gram
 
-calc.2gram.weight <- function (row)
-{
-	as.numeric(row[3]) / all.1gram.df[all.1gram.df$w1 == row[1], 2]
-}
-all.2gram.df$p <- sapply(all.2gram.df, calc.2gram.weight)
+#calc.2gram.weight <- function (row)
+#{
+#	as.numeric(row[3]) / all.1gram.df[all.1gram.df$w1 == row[1], 2]
+#}
+#all.2gram.df$p <- sapply(all.2gram.df, calc.2gram.weight)
 
 
 

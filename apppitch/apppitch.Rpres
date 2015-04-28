@@ -1,9 +1,17 @@
 <style>
 
+@import url('//fonts.googleapis.com/css?family=Lobster|Cabin:400,700');
+
+.section .reveal h1
+{
+    font-family: 'Lobster';
+    font-weight: 500;
+}
+
 .footer
 {
     color: white;
-    background: #FFB300;
+    background: #283E51;
     position: fixed;
     top: 95%;
     text-align:right;
@@ -13,85 +21,96 @@
 }
 
 .section .reveal .state-background {
-  background-color: orange;
+  background-color: #283E51;
 }
 
 </style>
 
-Distribution Simulator App
+Next Word Predictor
 ========================================================
 author: Guillermo Menéndez
-date: 08/02/2015
+date: 24/04/2015
 font-family: 'Helvetica'
 transition: linear
 
 The application
 ========================================================
 
-The distribution simulator allows to create, configure and display dynamic distributions.
+Next word predictor is a shiny application that predicts next word in a sentence,
+given an input typed by the user.
 
-Handy to simulate distributions without R studio or messing with code.
+User can choose how many words wants to be predicted.
 
-Graphical results.
+![User can choose the number of predicted words](images/slider.tiff)
 
-Highly configurable:
-- Distribution type and parameters
-- Number of observations
-- Plot kind
+The application will predict up to the number of words requested by user,
+ordered by their probability.
 
-<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
+<div class="footer">https://gmcorral.shinyapps.io/nwpred/  </div>
 
-Input controls
+The application
 ========================================================
 
-Distribution type and parameters:
+The algorithm is automatically executed each time user types a new word.
 
-- __Normal distribution__: configurable mean and std deviation.
-- __Uniform distribution__: configurable lower and upper limits.
-- __Log-normal distribution__: configurable mean and std dev logs.
-- __Exponential distribution__: configurable rate.
+![User can write any sentence in the text input](images/input.tiff)
 
-Plot type:
-
-- __Histogram__: values on __x__ and frequency on __y__.
-- __Scatter plot__: index on __x__ and values on __y__.
-
-Number of observations.
-
-<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
-
-Output tabs
-========================================================
-
-Right frame displays data:
-
-- __Plot__: distribution represented through the chosen plot.
-- __Summary__: mean, median and quantiles of the distribution values.
-- __Table__: interactive table with generated distribution values.
-- __Help__: application documentation.
-
-Tabs contents are dynamically refreshed with configuration changes.
-
-<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
-
-Example
-========================================================
-
-Example simulation:
-
-    Normal distribution:
-        - Mean: 10
-        - Std dev: 5
-    Plot type: Histogram
-    Observations nr.: 600
-
-<div class="footer">https://gmcorral.shinyapps.io/shinyapp/</div>
+<div class="footer">https://gmcorral.shinyapps.io/nwpred/  </div>
 
 ***
 
-```{r, echo=FALSE}
-dist <- rnorm(600, 10, 5);
-hist(dist, col='lightblue', main='Histogram', xlab = "Value", ylab = "Frequency");
-```
+Results are shown in the box below the text, and can be easilly incorporated to
+the sentence by clicking on them.
+
+![User can click on results to add them to the sentence](images/results.tiff)
+
+
+
+The algorithm
+========================================================
+
+The application uses models created from a huge corpora of internet texts,
+extracted from twitter, blogs and news pages.
+
+These corpora have been cleaned up, splitted and ordered to generate four n-grams
+(1-gram to 4-gram), which store the different sequences of 1, 2, 3 and 4 words
+extracted from the texts.
+
+Each of these sequences is given a weight, based on its number of occurrences
+and the number of occurrences of its sub-sequences.
+
+<div class="footer">https://gmcorral.shinyapps.io/nwpred/  </div>
+
+The algorithm
+========================================================
+
+The algorithm uses the following backoff strategy:
+
+- __sentence > 2 words__: find last 3 words in the 4-gram.
+If found, return most probable next words ordered by weigth.
+- __sentence = 2 words or 4-gram failed__: find last 2 words in the 3-gram.
+If found, return most probable next words ordered by weigth.
+- __sentence = 1 word or 3-gram failed__: find last word in the 2-gram.
+If found, return most probable next words ordered by weigth.
+- __everything else failed__: return top words from 1-gram, ordered by weigth.
+
+<div class="footer">https://gmcorral.shinyapps.io/nwpred/  </div>
+
+Example predictions
+========================================================
+
+These are some sentences extracted from the corpora, and the predictions
+returned.
+
+- Caracole is a new company, but like so __many__
+- Will it definitely not make the situation __worse__
+- I absolutely love that __song__
+
+You can try your own!
+
+
+
+<div class="footer">https://gmcorral.shinyapps.io/nwpred/  </div>
+
 
 
